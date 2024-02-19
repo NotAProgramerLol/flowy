@@ -176,15 +176,15 @@ impl Timetable {
         let mut ret: HashMap<SolarTime, f64> = HashMap::new();
 
         // Calculate Julian day
-        let jd = JulianDay::from_epoch(self.date);
+        let jd: JulianDay = JulianDay::from_epoch(self.date);
 
         // Calculate Julian century
-        let jdn = jd.round();
+        let jdn: JulianDay = jd.round();
         let century: f64 = jdn.century();
 
         // Calculate apparent solar noon
         let sol_noon: f64 = time_of_solar_noon(century, self.lon);
-        let j_noon = jdn.sub(0.5).add(sol_noon / MINS_PER_DAY);
+        let j_noon: JulianDay = jdn.sub(0.5).add(sol_noon / MINS_PER_DAY);
         let t_noon: f64 = j_noon.century();
 
         // Calulate absolute time of other phenomena
@@ -208,7 +208,7 @@ impl Timetable {
     /// - lat: Latitude of location
     /// - lon: Longitude of location
     pub fn new(date: f64, lat: f64, lon: f64) -> Self {
-        let mut ret = Self::default();
+        let mut ret: Timetable = Self::default();
         ret.angles = ret.generate_time_angles();
         ret.date = date;
         ret.lat = lat;
@@ -429,7 +429,7 @@ fn time_of_solar_elevation(century: f64, t_noon: f64, lat: f64, lon: f64, elev: 
 /// - lon: Longitude of location
 fn solar_elevation_from_time(century: f64, lat: f64, lon: f64) -> f64 {
     // Minutes from midnight
-    let jd = JulianDay::from_century(century);
+    let jd: JulianDay = JulianDay::from_century(century);
     let offset: f64 = (jd - jd.round() - 0.5) * MINS_PER_DAY;
 
     let eq_time: f64 = equation_of_time(century);
@@ -445,7 +445,7 @@ fn solar_elevation_from_time(century: f64, lat: f64, lon: f64) -> f64 {
 /// - lon: Longitude of location
 /// - Return: Solar angular elevation in degrees
 pub fn solar_elevation(epoch: f64, lat: f64, lon: f64) -> f64 {
-    let jd = JulianDay::from_epoch(epoch);
+    let jd: JulianDay = JulianDay::from_epoch(epoch);
     let ret: f64 = solar_elevation_from_time(jd.century(), lat, lon);
 
     ret.to_degrees()
@@ -464,8 +464,8 @@ pub fn unix_to_local(time: i64) -> DateTime<Local> {
 }
 
 pub fn time_to_minutes(time: String) -> u32 {
-    let time = chrono::NaiveTime::parse_from_str(&time, "%H:%M:%S").unwrap();
-    let h1 = time.hour();
-    let m1 = time.minute();
+    let time: chrono::prelude::NaiveTime = chrono::NaiveTime::parse_from_str(&time, "%H:%M:%S").unwrap();
+    let h1: u32 = time.hour();
+    let m1: u32 = time.minute();
     h1 * 60 + m1
 }

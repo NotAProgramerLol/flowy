@@ -16,11 +16,13 @@ pub enum DesktopEnvt {
     KDE,
     BSPWM,
     I3,
+    AWESOME,
 }
 
 impl Desktop for DesktopEnvt {
     fn new() -> Result<Self, Box<dyn Error>> {
-        let desktop = std::env::var("XDG_CURRENT_DESKTOP")?;
+        let desktop: String = std::env::var("XDG_CURRENT_DESKTOP")?;
+
         if is_gnome_compliant(&desktop) {
             Ok(DesktopEnvt::GNOME)
         } else {
@@ -32,13 +34,14 @@ impl Desktop for DesktopEnvt {
                 "KDE" => DesktopEnvt::KDE,
                 "bspwm" => DesktopEnvt::BSPWM,
                 "i3" => DesktopEnvt::I3,
+                "Awesome" => DesktopEnvt::AWESOME,
                 _ => panic!("Unsupported Desktop Environment"),
             })
         }
     }
 
     fn set_wallpaper(&self, path: &str) -> Result<(), Box<dyn Error>> {
-        let path = enquote::enquote('"', &format!("{}", path));
+        let path: String = enquote::enquote('"', &format!("{}", path));
 
         match self {
             DesktopEnvt::GNOME => {
@@ -70,13 +73,13 @@ impl Desktop for DesktopEnvt {
             }
 
             DesktopEnvt::XFCE => {
-                let path_unquoted = enquote::unquote(&path).unwrap();
-                let xfce_path = path_unquoted
+                let path_unquoted: String = enquote::unquote(&path).unwrap();
+                let xfce_path: &str = path_unquoted
                     .strip_prefix("file://")
                     .unwrap();
-                
+
                 // Get the raw output of xfconf-query for the wallpaper
-                let values_raw = Command::new("xfconf-query")
+                let values_raw: Vec<u8> = Command::new("xfconf-query")
                     .args(&[
                         "-c",
                         "xfce4-desktop",
@@ -89,7 +92,7 @@ impl Desktop for DesktopEnvt {
                     .stdout;
 
                 // Filter out unwanted values (everything except */last-image)
-                let values_str = match std::str::from_utf8(&values_raw) {
+                let values_str: String = match std::str::from_utf8(&values_raw) {
                     Ok(v) => v.to_string(),
                     Err(_) => "/backdrop/screen0/monitor0/workspace0/last-image".to_string(),
                 };
@@ -98,7 +101,7 @@ impl Desktop for DesktopEnvt {
                 let values_vec: Vec<&str> = values_str
                     .split_whitespace()
                     .step_by(2)
-                    .filter(|v| v.contains("last-image"))
+                    .filter(|v: &&str| v.contains("last-image"))
                     .collect();
 
                 // Set all the keys to the new wallpaper
@@ -128,7 +131,7 @@ impl Desktop for DesktopEnvt {
 
             DesktopEnvt::KDE => {
                 // KDE needs plasma shell scripting to change the wallpaper
-                let kde_set_arg = format!(
+                let kde_set_arg: String = format!(
                     r#"
                     const monitors = desktops()
                     for (var i = 0; i < monitors.length; i++) {{
@@ -139,8 +142,8 @@ impl Desktop for DesktopEnvt {
                     &path
                 );
 
-                let which_qdbus = which("qdbus");
-                
+                let which_qdbus: Result<PathBuf, which::Error> = which("qdbus");
+
                 if which_qdbus.is_ok() {
                     Command::new("qdbus")
                         .args(&[
@@ -162,7 +165,7 @@ impl Desktop for DesktopEnvt {
                 }
             }
 
-            DesktopEnvt::BSPWM | DesktopEnvt::I3 => {
+            DesktopEnvt::BSPWM | DesktopEnvt::I3 | DesktopEnvt::AWESOME => {
                 Command::new("feh")
                     .args(&["--bg-fill", &path.replace("\"", "")])
                     .output()?;
@@ -173,7 +176,7 @@ impl Desktop for DesktopEnvt {
     }
 
     fn get_wallpaper(&self) -> Result<PathBuf, Box<dyn Error>> {
-        let output = match self {
+        let output: std::process::Output = match self {
             DesktopEnvt::GNOME => Command::new("gsettings")
                 .args(&["get", "org.gnome.desktop.background", "picture-uri"])
                 .output()?,
@@ -203,7 +206,7 @@ impl Desktop for DesktopEnvt {
                 ])
                 .output()?,
             DesktopEnvt::KDE => return Ok(kde_get_wallpaper()?),
-            DesktopEnvt::BSPWM | DesktopEnvt::I3 => Command::new("sed")
+            DesktopEnvt::BSPWM | DesktopEnvt::I3 | DesktopEnvt::AWESOME => Command::new("sed")
                 .args(&[
                     "-n",
                     "'s/feh.*\\('.*'\\)/\\1/gp'",
@@ -212,7 +215,7 @@ impl Desktop for DesktopEnvt {
                 .output()?,
         };
 
-        let output = enquote::unquote(String::from_utf8(output.stdout)?.trim().into())?;
+        let output: String = enquote::unquote(String::from_utf8(output.stdout)?.trim().into())?;
         Ok(PathBuf::from(output))
     }
 }
@@ -227,17 +230,17 @@ fn is_gnome_compliant(desktop: &str) -> bool {
 /// It reads the first line starting with "Image="
 /// in the file "~/.config/plasma-org.kde.plasma.desktop-appletsrc"
 fn kde_get_wallpaper() -> Result<PathBuf, Box<dyn Error>> {
-    let mut path = dirs_next::config_dir().ok_or("Could not determine config directory")?;
+    let mut path: PathBuf = dirs_next::config_dir().ok_or("Could not determine config directory")?;
     path.push("plasma-org.kde.plasma.desktop-appletsrc");
 
     // Opening the file into a buffer reader
     let file = std::fs::File::open(path)?;
 
-    let reader = std::io::BufReader::new(file);
+    let reader: std::io::BufReader<std::fs::File> = std::io::BufReader::new(file);
     for line in reader.lines() {
         let line = line?;
         if line.starts_with("Image=") {
-            let mut line = line[6..].trim();
+            let mut line: &str = line[6..].trim();
             if line.starts_with("file://") {
                 line = &line[7..];
             }

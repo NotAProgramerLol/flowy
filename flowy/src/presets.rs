@@ -7,10 +7,10 @@ use tar::Archive;
 /// Downloads a given file
 pub fn get_file(path: &Path, url: &str) -> Result<(), Box<dyn Error>> {
     println!("GET file");
-    let res = ureq::get(url).call()?;
+    let res: ureq::Response = ureq::get(url).call()?;
     println!("Status: {}", res.status());
     let mut reader = res.into_reader();
-    let mut out = File::create(path).expect("Failed to create file");
+    let mut out: File = File::create(path).expect("Failed to create file");
     std::io::copy(&mut reader, &mut out).expect("Failed to copy content");
     println!("Tar ball downloaded");
     Ok(())
@@ -19,9 +19,9 @@ pub fn get_file(path: &Path, url: &str) -> Result<(), Box<dyn Error>> {
 /// Unpacks a tar ball to a new directory
 fn unpack_tar(src: &Path, dst: &Path) -> Result<(), Box<dyn Error>> {
     println!("Unpacking tar ball {:?}", &src);
-    let tar_gz = File::open(src)?;
-    let tar = GzDecoder::new(tar_gz);
-    let mut archive = Archive::new(tar);
+    let tar_gz: File = File::open(src)?;
+    let tar: GzDecoder<File> = GzDecoder::new(tar_gz);
+    let mut archive: Archive<GzDecoder<File>> = Archive::new(tar);
     archive.unpack(dst)?;
     println!("Done");
     Ok(())
@@ -34,11 +34,11 @@ pub fn match_preset(preset: Option<&str>) -> Result<(), Box<dyn Error>> {
         // As can be seen here, we only check if
         // there is something after the preset flag
         Some(_) => {
-            let config_path = flowy::get_config_dir()?;
+            let config_path: std::path::PathBuf = flowy::get_config_dir()?;
 
             let mut archive_path = config_path.clone();
             archive_path.push("lake.tar.gz");
-            let mut dir_path = config_path.clone();
+            let mut dir_path: std::path::PathBuf = config_path.clone();
             dir_path.push("lake");
 
             // Download and unzip the folder

@@ -6,11 +6,11 @@ mod presets;
 fn main() -> Result<(), Box<dyn std::error::Error>> {
     // Housekeeping for Clap Arg parsing
     let yaml = load_yaml!("cli.yml");
-    let matches = App::from(yaml).get_matches();
+    let matches: clap::ArgMatches = App::from(yaml).get_matches();
     // The times are set by themselves
     // Just supply the path and the TOML file is generated
-    let dir = matches.value_of("dir");
-    let preset = matches.value_of("preset");
+    let dir: Option<&str> = matches.value_of("dir");
+    let preset: Option<&str> = matches.value_of("preset");
     // Error checking for the Solar option
     if let Some(_) = matches.values_of("solar") {
         // Loading up the args into a vector
@@ -37,7 +37,7 @@ fn main() -> Result<(), Box<dyn std::error::Error>> {
         Err(e) => eprintln!("Error with preset {}", e),
     }
     // Runs forever
-    let config = flowy::get_config()?;
+    let config: flowy::Config = flowy::get_config()?;
     flowy::set_times(config)?;
     // Never reaches this but needed for Result return
     Ok(())

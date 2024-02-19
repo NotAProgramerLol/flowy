@@ -1,13 +1,13 @@
 [package]
 name = "flowy"
-version = "0.4.0"
-authors = ["vineetred <vineetreddy@live.com>"]
+version = "0.4.1"
+authors = ["vineetred <vineetreddy@live.com>", "NotAProgramerLol<oliver.boros.nl@gmail.com>"]
 edition = "2018"
 license = "GPL-3.0-or-later"
 description = "Dynamic desktop wallpaper changer"
 readme = "README.md"
-homepage = "https://github.com/vineetred/flowy"
-repository = "https://github.com/vineetred/flowy"
+homepage = "https://github.com/NotAProgramerLol/flowy"
+repository = "https://github.com/NotAProgramerLol/flowy"
 categories = ["command-line-utilities"]
 exclude = ["demo.gif", "demo2.gif"]
 # See more keys and their definitions at https://doc.rust-lang.org/cargo/reference/manifest.html
@@ -15,9 +15,9 @@ exclude = ["demo.gif", "demo2.gif"]
 [dependencies]
 wallpaper_rs = { version = "0.1.1", path = "../wallpaper_rs" }
 enquote = "1.0.3"
-toml = "0.5"
+toml = "0.8"
 serde = { version = "1.0.114", features = ["derive"] }
-clap = { version = "=3.0.0-beta.2", features = ["yaml"] }
+clap = { version = "=4.5", features = ["yaml"] }
 flate2 = "1.0.16"
 tar = "0.4.36"
 directories-next = "2.0.0"
